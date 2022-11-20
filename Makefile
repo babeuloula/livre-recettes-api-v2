@@ -80,12 +80,6 @@ reset:
 	else \
 		$(DISABLE_XDEBUG) bin/console doctrine:database:drop --if-exists --force; \
 		make doctrine-migrations; \
-		if [ "$(APP_ENV)" = "test" ]; then \
-		    rm -rf public/test; \
-		    rm -rf var/cache/test/vault; \
-    	else \
-			rm -rf public/images; \
-		fi; \
 		$(DISABLE_XDEBUG) bin/console doctrine:fixtures:load --no-interaction; \
 		$(DISABLE_XDEBUG) bin/console messenger:setup-transports; \
 	fi;
@@ -166,9 +160,7 @@ phpunit: is_test_container clear-cache reset
 copy-paste: ## Check duplicate code
 copy-paste: is_test_container
 	$(DISABLE_XDEBUG) ./bin/phpcpd src \
-		--fuzzy \
-		--exclude src/Security/Guard/AdministratorAuthenticator.php \
-		--exclude src/Security/Guard/LdapAuthenticator.php
+		--fuzzy
 
 coverage-checker:
 	$(DISABLE_XDEBUG) ./vendor/bin/coverage-checker var/coverage/xml/index.xml 80

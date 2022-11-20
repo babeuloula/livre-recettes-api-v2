@@ -1,6 +1,6 @@
 FROM php:8.1-fpm
 
-ARG DOCKER_PHP_EXT=1.5.14
+ARG DOCKER_PHP_EXT=1.5.47
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/download/${DOCKER_PHP_EXT}/install-php-extensions /usr/local/bin/
 RUN chmod +x /usr/local/bin/install-php-extensions
 
