@@ -1,0 +1,129 @@
+version: '3.5'
+
+services:
+    # Reverse proxy for SSL certificates
+    nginx_proxy:
+        image: jwilder/nginx-proxy
+        ports:
+            - "8084:80"
+            - "443:443"
+        volumes:
+            - /var/run/docker.sock:/tmp/docker.sock:ro
+            - ./proxy/config/proxy.conf:/etc/nginx/conf.d/proxy.conf:ro
+            - ./certificates/${HTTP_HOST}.pem:/etc/nginx/certs/${HTTP_HOST}.crt:ro
+            - ./certificates/${HTTP_HOST}.key:/etc/nginx/certs/${HTTP_HOST}.key:ro
+        restart: "no"
+
+    nginx:
+        build:
+            context: .
+            dockerfile: ./nginx/Dockerfile
+        environment:
+            - VIRTUAL_HOST=${HTTP_HOST}
+        volumes:
+            - ../public:/var/www/html/public
+            - ./nginx/config/vhost.nginx:/etc/nginx/conf.d/default.conf:ro
+        restart: "no"
+
+    # PHP Container for dev
+    php:
+        build:
+            context: .
+            dockerfile: ./php/Dockerfile
+            args:
+                # It's UID in order to have the same rights on your computer and your docker container
+                UID: "${DOCKER_UID}"
+                TZ: "${TZ}"
+        env_file:
+            - .env
+        environment:
+            - APP_ENV=dev
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        volumes:
+            - ./php/config/apcu.ini:/usr/local/etc/php/conf.d/apcu.ini:ro
+            - ./php/config/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
+            - ./php/config/upload.ini:/usr/local/etc/php/conf.d/upload.ini:ro
+            - ..:/var/www/html
+            - xdebug:/xdebug
+        restart: "no"
+
+    # PHP container for tests
+    php_test:
+        build:
+            context: .
+            dockerfile: ./php/Dockerfile
+            args:
+                UID: "${DOCKER_UID}"
+                TZ: "${TZ}"
+                APP_ENV: "test"
+        env_file:
+            - .env
+        environment:
+            - APP_ENV=test
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        volumes:
+            - ./php/config/apcu.ini:/usr/local/etc/php/conf.d/apcu.ini:ro
+            - ./php/config/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
+            - ./php/config/upload.ini:/usr/local/etc/php/conf.d/upload.ini:ro
+            - ..:/var/www/html
+        restart: "no"
+
+    # Database container for dev
+    database:
+        image: mariadb:10.5.10
+        env_file:
+            - .env
+        volumes:
+            - database:/var/lib/mysql
+        ports:
+            # Expose port if you want to connect to databse with a DB software like MySQL Workbench
+            - "${MYSQL_PORT:-3307}:3306"
+        restart: "no"
+
+    # Database container for tests
+    database_test:
+        image: mariadb:10.5.10
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_DATABASE=api_recipes_book_test
+            - MYSQL_USER=api_recipes_book_test
+            - MYSQL_PASSWORD=api_recipes_book_test
+        volumes:
+            # Use tmpFS to increase database performance
+            -   type: tmpfs
+                target: /var/lib/mysql
+        ports:
+            # Expose port if you want to connect to databse with a DB software like MySQL Workbench
+            - "${MYSQL_TEST_PORT:-3308}:3306"
+        restart: "no"
+
+    # Mailcatcher container
+    mailhog:
+        image: mailhog/mailhog
+        ports:
+            - "${MAILHOG_PORT:-8025}:8025"
+        restart: "no"
+
+    # Lightweight database reader
+    adminer:
+        image: adminer
+        restart: "no"
+        ports:
+            - "${ADMINER_PORT:-8080}:8080"
+
+    # AMQP
+    rabbitmq:
+        image: rabbitmq:3.9-management-alpine
+        restart: "no"
+        environment:
+            RABBITMQ_DEFAULT_USER: "guest"
+            RABBITMQ_DEFAULT_PASS: "guest"
+            RABBITMQ_DEFAULT_VHOST: "/"
+        ports:
+            - "15672:15672"
+
+volumes:
+    database:
+    xdebug:
