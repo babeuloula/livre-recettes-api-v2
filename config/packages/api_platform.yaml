@@ -1,7 +1,31 @@
 api_platform:
+    show_webby: false
+    title: 'API Recipes Book'
+    description: 'API documentation for Recipes Book application'
+    enable_swagger_ui: true
+    enable_re_doc: true
+    # Hide GraphQL link on API docs
+    graphql:
+        enabled: true
     mapping:
         paths: ['%kernel.project_dir%/src/Entity']
+    formats:
+        jsonld: [ 'application/ld+json' ]
+        json: [ 'application/json' ]
+        html: [ 'text/html' ]
+        multipart: [ 'multipart/form-data' ]
+        csv: [ 'text/csv' ]
     patch_formats:
-        json: ['application/merge-patch+json']
+        json: [ 'application/merge-patch+json', 'application/json' ]
     swagger:
-        versions: [3]
+        versions: [ 3 ]
+        api_keys:
+            Bearer:
+                name: Authorization
+                type: header
+    resource_class_directories:
+        - '%kernel.project_dir%/src/Entity'
+    defaults:
+        pagination_client_items_per_page: true
+        pagination_items_per_page: 30
+        pagination_maximum_items_per_page: 100

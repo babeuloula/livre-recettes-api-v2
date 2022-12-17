@@ -4,7 +4,7 @@ doctrine:
         host: '%env(MYSQL_HOST)%'
         user: '%env(MYSQL_USER)%'
         password: '%env(MYSQL_PASSWORD)%'
-        server_version: 'mariadb-10.5.10'
+        server_version: 'mariadb-10.9.4'
 
     orm:
         auto_generate_proxy_classes: true
