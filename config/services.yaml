@@ -1,0 +1,21 @@
+parameters:
+    api.prefix: '%env(API_PREFIX)%'
+    app.monolog.level: '%env(MONOLOG_LEVEL)%'
+    token.refresh.name: 'refreshToken'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    _instanceof:
+        Doctrine\Common\EventSubscriber:
+            tags: [ 'doctrine.event_subscriber' ]
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
